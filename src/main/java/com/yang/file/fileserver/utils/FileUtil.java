@@ -73,6 +73,11 @@ public class FileUtil {
         }
     }
 
+    /**
+     * 获取所有文件信息
+     * @param dirs
+     * @return
+     */
     public List<Map<String, Object>> listAll(File dirs) {
         List<Map<String, Object>> list = new ArrayList<>();
         File files[] = dirs.listFiles();
@@ -90,5 +95,65 @@ public class FileUtil {
             }
         }
         return list;
+    }
+
+    /**
+     * 获取所有文件夹信息
+     * @param dirs
+     * @return
+     */
+    public List<Map<String, Object>> dirAll(File dirs) {
+        List<Map<String, Object>> list = new ArrayList<>();
+
+        File files[] = dirs.listFiles();
+        long fileSize = 0;
+        int count = 0;
+        for (File file :
+                files) {
+            if (file.isDirectory()) {
+                List<Map<String, Object>> l = dirAll(file);
+
+                Map<String, Object> res = new HashMap<>();
+                res.put("dirName", file.getName());
+                res.put("dirPath", file.getAbsolutePath());
+                res.putAll(l.get(0));
+                list.add(res);
+            } else {
+                fileSize += file.length();
+                count++;
+                if (count == files.length) {
+                    Map<String, Object> res = new HashMap<>();
+                    res.put("dirSize", fileSize);
+                    list.add(res);
+                }
+
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 根据文件名查找文件路径
+     * @param dirs
+     * @param fileName
+     * @return
+     */
+    public String searchFile(File dirs, String fileName) {
+        File files[] = dirs.listFiles();
+        for (File file :
+                files) {
+            if (file.isDirectory()) {
+                String path = searchFile(file, fileName);
+                if (!path.equals("")) {
+                    return path;
+                }
+            } else {
+                if (file.getName().equals(fileName)) {
+                    // 找到该文件
+                    return file.getAbsolutePath();
+                }
+            }
+        }
+        return "";
     }
 }
