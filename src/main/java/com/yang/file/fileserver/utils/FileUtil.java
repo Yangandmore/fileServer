@@ -3,7 +3,6 @@ package com.yang.file.fileserver.utils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DateFormat;
@@ -133,6 +132,29 @@ public class FileUtil {
     }
 
     /**
+     * 根据文件夹名称删除文件夹
+     * @param dirs
+     * @param dirName
+     * @return
+     */
+    public String searchDir(File dirs, String dirName) {
+        File files[] = dirs.listFiles();
+        for (File file :
+                files) {
+            if (file.isDirectory()) {
+                if (file.getName().equals(dirName)) {
+                    return file.getAbsolutePath();
+                }
+                String path = searchFile(file, dirName);
+                if (!path.equals("")) {
+                    return path;
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
      * 根据文件名查找文件路径
      * @param dirs
      * @param fileName
@@ -155,5 +177,22 @@ public class FileUtil {
             }
         }
         return "";
+    }
+
+    /**
+     * 删除文件夹和文件夹内所有文件
+     * @param dirs
+     */
+    public void deleteDirs(File dirs) {
+        File[] files = dirs.listFiles();
+        for (File file :
+                files) {
+            if (file.isDirectory()) {
+                deleteDirs(file);
+                file.delete();
+            } else {
+                file.delete();
+            }
+        }
     }
 }

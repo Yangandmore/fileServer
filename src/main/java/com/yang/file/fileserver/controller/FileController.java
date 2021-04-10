@@ -4,6 +4,7 @@ import com.yang.file.fileserver.entity.ResultInfo;
 import com.yang.file.fileserver.exception.FileEmptyException;
 import com.yang.file.fileserver.service.FileService;
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,13 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @Api(tags = "文件接口")
 public class FileController {
 
     @Autowired
     FileService fileService;
-
 
     // 增
     // 单个文件
@@ -35,6 +36,7 @@ public class FileController {
     })
     @PostMapping("/uploadFile")
     public ResultInfo addFile(@RequestParam(value = "file", required = true) MultipartFile file) throws IOException, FileEmptyException {
+        log.info("---->请求上传单个文件");
         ResultInfo res = new ResultInfo();
         if (file.isEmpty()) {
             // 文件为空
@@ -46,6 +48,7 @@ public class FileController {
             res.setStatus(0);
             res.setMsg("上传成功");
         }
+        log.info("<----上传单个文件成功");
         return res;
     }
 
@@ -60,6 +63,7 @@ public class FileController {
     })
     @PostMapping("/uploadMoreFile")
     public ResultInfo addFiles(@RequestParam("files") MultipartFile[] files) throws FileEmptyException, IOException {
+        log.info("---->请求上传多个文件");
         ResultInfo res = new ResultInfo();
         List<Map<String, Object>> list = new ArrayList<>();
         for (MultipartFile file :
@@ -75,10 +79,76 @@ public class FileController {
         res.setData(list);
         res.setStatus(0);
         res.setMsg("上传成功");
+        log.info("<----上传多个文件成功");
         return res;
     }
 
     // 删
+    @ApiOperation("删除所有文件")
+    @ApiResponses({
+            @ApiResponse(code = 0, message = "上传成功", response = ResultInfo.class),
+            @ApiResponse(code = -1, message = "文件服务器异常", response = ResultInfo.class),
+            @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
+            @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
+    })
+    @DeleteMapping("/delete/all")
+    public ResultInfo deleteAll() throws Exception {
+        log.info("---->请求删除所有文件");
+        ResultInfo resultInfo = new ResultInfo();
+
+        fileService.deleteDir(null);
+
+        resultInfo.setMsg("删除完成");
+        resultInfo.setStatus(0);
+        log.info("<----删除所有文件成功");
+        return resultInfo;
+    }
+
+    @ApiOperation("删除指定文件夹")
+    @ApiImplicitParams({
+            @ApiImplicitParam("查找文件的名称或文件路径:fileName 或者 filePath"),
+    })
+    @ApiResponses({
+            @ApiResponse(code = 0, message = "上传成功", response = ResultInfo.class),
+            @ApiResponse(code = -1, message = "文件服务器异常", response = ResultInfo.class),
+            @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
+            @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
+    })
+    @DeleteMapping("/delete/dirs")
+    public ResultInfo deleteDirs(@RequestBody Map<String, String> req) throws Exception {
+        log.info("---->请求删除文件夹");
+        ResultInfo resultInfo = new ResultInfo();
+
+        fileService.deleteDir(req);
+
+        resultInfo.setMsg("删除完成");
+        resultInfo.setStatus(0);
+        log.info("<----删除文件夹成功");
+        return resultInfo;
+    }
+
+    @ApiOperation("删除指定文件")
+    @ApiImplicitParams({
+            @ApiImplicitParam("查找文件的名称或文件路径:fileName 或者 filePath"),
+    })
+    @ApiResponses({
+            @ApiResponse(code = 0, message = "上传成功", response = ResultInfo.class),
+            @ApiResponse(code = -1, message = "文件服务器异常", response = ResultInfo.class),
+            @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
+            @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
+    })
+    @DeleteMapping("/delete/file")
+    public ResultInfo deleteFile(@RequestBody Map<String, String> req) throws Exception {
+        log.info("---->请求删除文件");
+        ResultInfo resultInfo = new ResultInfo();
+
+        fileService.deleteFile(req);
+
+        resultInfo.setMsg("删除完成");
+        resultInfo.setStatus(0);
+        log.info("<----删除文件成功");
+        return resultInfo;
+    }
 
     // 改
 
@@ -93,9 +163,11 @@ public class FileController {
     })
     @GetMapping("/list")
     public ResultInfo list() {
+        log.info("---->请求获取文件树");
         ResultInfo res = fileService.listAll();
         res.setMsg("请求成功");
         res.setStatus(0);
+        log.info("<----获取文件树成功");
         return res;
     }
 
@@ -108,9 +180,11 @@ public class FileController {
     })
     @GetMapping("/dir")
     public ResultInfo dirList() {
+        log.info("---->请求获取文件夹树");
         ResultInfo res = fileService.dirAll();
         res.setMsg("请求成功");
         res.setStatus(0);
+        log.info("<----获取文件夹树成功");
         return res;
     }
 
@@ -127,11 +201,13 @@ public class FileController {
     })
     @PostMapping("/searchFile")
     public ResultInfo searchFile(@RequestBody Map<String, String> req) throws Exception {
+        log.info("---->请求搜索文件");
         Map<String, Object> rsp = fileService.searchFile(req);
         ResultInfo resultInfo = new ResultInfo();
         resultInfo.setData(rsp);
         resultInfo.setStatus(0);
         resultInfo.setMsg("请求成功");
+        log.info("<----搜索文件成功");
         return resultInfo;
     }
 
@@ -142,7 +218,7 @@ public class FileController {
     })
     @PostMapping("/downloadFile")
     public void downloadFile(@RequestBody Map<String, String> req, HttpServletResponse response) {
-
+        log.info("---->请求下载文件");
         File file = fileService.getDownloadFile(req);
 
         if (file == null) return;
@@ -173,5 +249,6 @@ public class FileController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        log.info("<----下载文件成功");
     }
 }

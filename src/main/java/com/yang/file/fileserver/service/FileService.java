@@ -3,16 +3,17 @@ package com.yang.file.fileserver.service;
 import com.yang.file.fileserver.config.FileConfig;
 import com.yang.file.fileserver.entity.ResultInfo;
 import com.yang.file.fileserver.utils.FileUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class FileService {
 
@@ -28,6 +29,7 @@ public class FileService {
 
         // 保存路径不存在
         if (!dir.exists()) {
+            log.info("文件路径不存在，正在创建");
             dir.mkdirs();
         }
 
@@ -35,12 +37,13 @@ public class FileService {
         String filePath = fileUtil.getNewFilePath(fileConfig.getPath(), fileUtil.getYYYYMMDD(), file.getOriginalFilename());
         File f = new File(filePath);
         if (!f.exists()) {
+            log.info("文件路径不存在，正在创建");
             f.createNewFile();
         }
 
         // 保存文件
         fileUtil.uploadFile(file.getBytes(), filePath);
-
+        log.info("附件上传成功，获取文件路径:" + filePath);
         Map<String, Object> resultInfo = new HashMap<>();
         resultInfo.put("fileName", file.getOriginalFilename());
         resultInfo.put("filePath", filePath);
@@ -49,6 +52,65 @@ public class FileService {
     }
 
     // 删
+    public void deleteDir(Map<String, String> req) throws Exception {
+        if (req == null) {
+            // 删除所有文件
+            File dir = new File(fileConfig.getPath());
+            if(dir.exists()) {
+                log.info("开始删除文件夹:"+dir.getAbsolutePath());
+                fileUtil.deleteDirs(dir);
+            } else {
+                throw new FileNotFoundException();
+            }
+        } else {
+            // 删除指定文件夹
+            File file = null;
+            if (req.containsKey("filePath")) {
+                String filePath = req.get("filePath");
+                file = new File(filePath);
+            } else if (req.containsKey("fileName")) {
+                String fileName = req.get("fileName");
+                String filePath = fileUtil.searchDir(new File(fileConfig.getPath()), fileName);
+                if (filePath.equals("")) {
+                    throw new FileNotFoundException();
+                }
+                file = new File(filePath);
+            } else {
+                throw new Exception();
+            }
+            if (file.exists()) {
+                log.info("开始删除文件夹:"+file.getAbsolutePath());
+                fileUtil.deleteDirs(file);
+                file.delete();
+            } else {
+                throw new FileNotFoundException();
+            }
+        }
+    }
+
+    public void deleteFile(Map<String, String> req) throws Exception {
+        // 删除指定文件夹
+        File file = null;
+        if (req.containsKey("filePath")) {
+            String filePath = req.get("filePath");
+            file = new File(filePath);
+        } else if (req.containsKey("fileName")) {
+            String fileName = req.get("fileName");
+            String filePath = fileUtil.searchFile(new File(fileConfig.getPath()), fileName);
+            if (filePath.equals("")) {
+                throw new FileNotFoundException();
+            }
+            file = new File(filePath);
+        } else {
+            throw new Exception();
+        }
+        if (file.exists()) {
+            log.info("开始删除文件:"+file.getAbsolutePath());
+            file.delete();
+        } else {
+            throw new FileNotFoundException();
+        }
+    }
 
     // 改
 
@@ -59,6 +121,7 @@ public class FileService {
 
         // 保存路径不存在
         if (!dir.exists()) {
+            log.info("文件路径不存在，正在创建");
             dir.mkdirs();
         }
 
@@ -73,6 +136,7 @@ public class FileService {
 
         // 保存路径不存在
         if (!dir.exists()) {
+            log.info("文件路径不存在，正在创建");
             dir.mkdirs();
         }
 
@@ -119,9 +183,11 @@ public class FileService {
             }
             file = new File(filePath);
         } else {
+            log.info("下载文件参数信息未找到");
             return null;
         }
         if (!file.exists()) {
+            log.info("文件路径不存在,无法下载");
             return null;
         }
         return file;
