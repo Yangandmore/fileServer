@@ -113,6 +113,55 @@ public class FileService {
     }
 
     // 改
+    public Map<String, Object> updateFile(MultipartFile newFile, String fileName, String filePath) throws Exception {
+        File rootDir = new File(fileConfig.getPath());
+
+        // 保存路径不存在
+        if (!rootDir.exists()) {
+            log.info("文件路径不存在，正在创建");
+            rootDir.mkdirs();
+        }
+
+        // 获取需要替换文件的文件信息
+        File oldFile = null;
+        if (filePath != null) {
+            oldFile = new File(filePath);
+        } else if (fileName != null) {
+            String oldFilePath = fileUtil.searchFile(new File(fileConfig.getPath()), fileName);
+            if (oldFilePath.equals("")) {
+                throw new FileNotFoundException();
+            }
+            oldFile = new File(oldFilePath);
+        } else {
+            throw new Exception();
+        }
+
+        if (oldFile.exists()) {
+            // 先保存新文件
+            // 设置文件的路径
+            String newFilePath = fileUtil.getNewFilePath(fileConfig.getPath(), fileUtil.getYYYYMMDD(), newFile.getOriginalFilename());
+            File f = new File(newFilePath);
+            if (!f.exists()) {
+                log.info("新文件路径不存在，正在创建");
+                f.createNewFile();
+            }
+            // 保存文件
+            fileUtil.uploadFile(newFile.getBytes(), newFilePath);
+            log.info("新附件上传成功，获取文件路径:" + newFilePath);
+
+            // 后删除
+            oldFile.delete();
+
+            Map<String, Object> resultInfo = new HashMap<>();
+            resultInfo.put("fileName", newFile.getOriginalFilename());
+            resultInfo.put("filePath", f.getAbsolutePath());
+            resultInfo.put("fileSize", f.length());
+            return resultInfo;
+
+        } else {
+            throw new FileNotFoundException();
+        }
+    }
 
     // 查
     public ResultInfo listAll() {

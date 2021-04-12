@@ -15,6 +15,8 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @RestController
@@ -151,6 +153,29 @@ public class FileController {
     }
 
     // 改
+    @ApiOperation("修改指定的文件信息")
+    @ApiImplicitParams({
+            @ApiImplicitParam(value = "需要被覆盖的文件名称", required = false),
+            @ApiImplicitParam(value = "需要被覆盖的文件路径", required = false),
+            @ApiImplicitParam(value = "新文件")
+    })
+    @ApiResponses({
+            @ApiResponse(code = 0, message = "请求成功", response = ResultInfo.class),
+            @ApiResponse(code = -1, message = "文件服务器异常", response = ResultInfo.class),
+            @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
+            @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
+    })
+    @PostMapping("/updateFile")
+    public ResultInfo updateFile(@RequestParam(value = "fileName", required = false) String fileName, @RequestParam(value = "filePath", required = false) String filePath, @RequestParam("file") MultipartFile file) throws Exception {
+        log.info("---->请求修改文件");
+        Map<String, Object> data = fileService.updateFile(file, fileName, filePath);
+        ResultInfo resultInfo = new ResultInfo();
+        resultInfo.setData(data);
+        resultInfo.setMsg("修改完成");
+        resultInfo.setStatus(0);
+        log.info("<----修改文件成功");
+        return resultInfo;
+    }
 
     // 查
     // 查询文件路径结构
@@ -250,5 +275,70 @@ public class FileController {
             e.printStackTrace();
         }
         log.info("<----下载文件成功");
+    }
+
+    @ApiOperation("下载多个文件并压缩")
+    @ApiImplicitParams({
+            @ApiImplicitParam("下载文件的文件名称或者文件路径:fileName 或者 filePath"),
+    })
+    @PostMapping("/downloadZipFile")
+    public void downloadZipFile(@RequestBody List<Map<String, String>> req, HttpServletResponse response) {
+        log.info("---->请求下载压缩文件");
+        List<File> files = new ArrayList<>();
+        for (Map<String, String> map :
+                req) {
+            File file = fileService.getDownloadFile(map);
+            if (file == null) return;
+            files.add(file);
+        }
+
+        // 清空response
+        response.reset();
+        // 设置response的Header
+        response.setCharacterEncoding("UTF-8");
+        //Content-Disposition的作用：告知浏览器以何种方式显示响应返回的文件，用浏览器打开还是以附件的形式下载到本地保存
+        //attachment表示以附件方式下载   inline表示在线打开   "Content-Disposition: inline; filename=文件名.mp3"
+        // filename表示文件的默认名称，因为网络传输只支持URL编码的相关支付，因此需要将文件名URL编码后进行传输,前端收到后需要反编码才能获取到真正的名称
+        try {
+            response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("压缩包.zip", "UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return ;
+        }
+        // 告知浏览器文件的大小
+        response.setContentType("application/zip;charset=utf-8");
+        BufferedInputStream bis = null;
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(response.getOutputStream())) {
+            for (File file :
+                    files) {
+                ZipEntry ze = new ZipEntry(file.getName());
+                zipOutputStream.putNextEntry(ze);
+
+                bis = new BufferedInputStream(new FileInputStream(file),1024 * 10);
+                int len;
+                byte[] buffer = new byte[1024];
+                while ((len = bis.read(buffer)) != -1) {
+                    zipOutputStream.write(buffer, 0, len);
+                }
+                bis.close();
+            }
+
+            zipOutputStream.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            if (bis != null) {
+                try {
+                    bis.close();
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                    return;
+                }
+            }
+            return;
+        }
+
+
+        log.info("<----下载压缩文件成功");
     }
 }

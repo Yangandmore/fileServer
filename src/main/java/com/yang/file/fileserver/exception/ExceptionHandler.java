@@ -14,6 +14,7 @@ public class ExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(Exception.class)
     public ResultInfo handleException(Exception e) {
         log.error("<----请求过程异常-Exception");
+        e.printStackTrace();
         return ResultInfo.error();
     }
 
