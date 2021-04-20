@@ -129,7 +129,7 @@ public class FileController {
         return resultInfo;
     }
 
-    @ApiOperation("删除指定文件")
+    @ApiOperation("删除指定单个文件")
     @ApiImplicitParams({
             @ApiImplicitParam("查找文件的名称或文件路径:fileName 或者 filePath"),
     })
@@ -145,6 +145,31 @@ public class FileController {
         ResultInfo resultInfo = new ResultInfo();
 
         fileService.deleteFile(req);
+
+        resultInfo.setMsg("删除完成");
+        resultInfo.setStatus(0);
+        log.info("<----删除文件成功");
+        return resultInfo;
+    }
+
+    @ApiOperation("删除指定多个文件")
+    @ApiImplicitParams({
+            @ApiImplicitParam("查找文件的名称或文件路径:fileName 或者 filePath"),
+    })
+    @ApiResponses({
+            @ApiResponse(code = 0, message = "上传成功", response = ResultInfo.class),
+            @ApiResponse(code = -1, message = "文件服务器异常", response = ResultInfo.class),
+            @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
+            @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
+    })
+    @DeleteMapping("/delete/files")
+    public ResultInfo deleteFiles(@RequestBody List<Map<String, String>> req) throws Exception {
+        log.info("---->请求删除文件");
+        ResultInfo resultInfo = new ResultInfo();
+        for (Map<String, String> map :
+                req) {
+            fileService.deleteFile(map);
+        }
 
         resultInfo.setMsg("删除完成");
         resultInfo.setStatus(0);
@@ -178,7 +203,24 @@ public class FileController {
     }
 
     // 查
-    // 查询文件路径结构
+    @ApiOperation("查询文件树结构")
+    @ApiResponses({
+            @ApiResponse(code = 0, message = "请求成功", response = ResultInfo.class),
+            @ApiResponse(code = -1, message = "文件服务器异常", response = ResultInfo.class),
+            @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
+            @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
+    })
+    @GetMapping("/listTree")
+    public ResultInfo getFileTree() {
+        log.info("---->请求获取文件结构树");
+        ResultInfo res = fileService.listTree();
+        res.setMsg("请求成功");
+        res.setStatus(0);
+        log.info("<----获取文件结构树成功");
+        return res;
+    }
+
+    // 获取所有文件
     @ApiOperation("查询所有文件信息")
     @ApiResponses({
             @ApiResponse(code = 0, message = "请求成功", response = ResultInfo.class),
@@ -188,11 +230,11 @@ public class FileController {
     })
     @GetMapping("/list")
     public ResultInfo list() {
-        log.info("---->请求获取文件树");
+        log.info("---->请求获取所有文件");
         ResultInfo res = fileService.listAll();
         res.setMsg("请求成功");
         res.setStatus(0);
-        log.info("<----获取文件树成功");
+        log.info("<----获取所有文件成功");
         return res;
     }
 
@@ -264,6 +306,9 @@ public class FileController {
             //Content-Disposition的作用：告知浏览器以何种方式显示响应返回的文件，用浏览器打开还是以附件的形式下载到本地保存
             //attachment表示以附件方式下载   inline表示在线打开   "Content-Disposition: inline; filename=文件名.mp3"
             // filename表示文件的默认名称，因为网络传输只支持URL编码的相关支付，因此需要将文件名URL编码后进行传输,前端收到后需要反编码才能获取到真正的名称
+            response.addHeader("Access-Control-Allow-Origin", "*");
+            response.addHeader("Access-Control-Expose-Headers", "Content-Type,Content-Disposition,attachment");
+            response.addHeader("Access-Control-Allow-Headers", "Content-Type,Content-Disposition,attachment");
             response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(file.getName(), "UTF-8"));
             // 告知浏览器文件的大小
             response.addHeader("Content-Length", "" + file.length());
@@ -301,6 +346,10 @@ public class FileController {
         // filename表示文件的默认名称，因为网络传输只支持URL编码的相关支付，因此需要将文件名URL编码后进行传输,前端收到后需要反编码才能获取到真正的名称
         try {
             response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("压缩包.zip", "UTF-8"));
+            System.out.println(URLEncoder.encode("压缩包.zip", "UTF-8"));
+            response.addHeader("Access-Control-Allow-Origin", "*");
+            response.addHeader("Access-Control-Expose-Headers", "Content-Type,Content-Disposition,attachment");
+            response.addHeader("Access-Control-Allow-Headers", "Content-Type,Content-Disposition,attachment");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
             return ;

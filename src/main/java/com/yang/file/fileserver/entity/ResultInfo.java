@@ -3,8 +3,6 @@ package com.yang.file.fileserver.entity;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
-import java.util.HashMap;
-
 @Data
 public class ResultInfo {
 

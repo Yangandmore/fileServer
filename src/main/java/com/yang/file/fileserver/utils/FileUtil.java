@@ -73,6 +73,33 @@ public class FileUtil {
     }
 
     /**
+     * 获取文件夹结构树
+     * @param dirs
+     * @return
+     */
+    public List<Map<String, Object>> listTree(File dirs) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        File files[] = dirs.listFiles();
+        for (File file :
+                files) {
+            if (file.isDirectory()) {
+                Map<String, Object> map = new HashMap<>();
+                List<Map<String, Object>> l = listTree(file);
+                map.put("files", l);
+                map.put("fileName", file.getName());
+                list.add(map);
+            } else {
+                Map<String, Object> map = new HashMap<>();
+                map.put("fileName", file.getName());
+                map.put("filePath", file.getAbsolutePath());
+                map.put("fileSize", file.length());
+                list.add(map);
+            }
+        }
+        return list;
+    }
+
+    /**
      * 获取所有文件信息
      * @param dirs
      * @return

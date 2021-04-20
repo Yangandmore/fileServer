@@ -164,6 +164,21 @@ public class FileService {
     }
 
     // 查
+    public ResultInfo listTree() {
+        ResultInfo resultInfo = new ResultInfo();
+        File dir = new File(fileConfig.getPath());
+
+        // 保存路径不存在
+        if (!dir.exists()) {
+            log.info("文件路径不存在，正在创建");
+            dir.mkdirs();
+        }
+
+        List<Map<String, Object>> list = fileUtil.listTree(dir);
+        resultInfo.setData(list);
+        return resultInfo;
+    }
+
     public ResultInfo listAll() {
         ResultInfo resultInfo = new ResultInfo();
         File dir = new File(fileConfig.getPath());
