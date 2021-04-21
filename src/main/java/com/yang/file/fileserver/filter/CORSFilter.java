@@ -26,8 +26,6 @@ public class CORSFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         if (fileConfig.isCors()) {
             HttpServletResponse res = (HttpServletResponse) servletResponse;
-            // 设置允许Cookie
-//        res.addHeader("Access-Control-Allow-Credentials", "true");
             // 允许http://www.xxx.com域（自行设置，这里只做示例）发起跨域请求
             res.addHeader("Access-Control-Allow-Origin", "*");
             // 设置允许跨域请求的方法

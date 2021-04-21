@@ -1,7 +1,7 @@
 文件服务器
 ---
 
-最小的文件服务器，没有数据库。配置好路径、java环境，即可使用。
+最小的文件服务器，没有数据库。配置好路径、java环境，即可使用。  
 👉 支持配套前端[fileServer-react](https://github.com/Yangandmore/fileserver-react)提供页面管理。
 
 * [x] springboot

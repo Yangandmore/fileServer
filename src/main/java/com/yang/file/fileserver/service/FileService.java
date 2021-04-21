@@ -12,6 +12,7 @@ import java.io.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -109,6 +110,11 @@ public class FileService {
             file.delete();
         } else {
             throw new FileNotFoundException();
+        }
+        File parentFile = file.getParentFile();
+        if (Objects.requireNonNull(parentFile.listFiles()).length == 0) {
+            // 如果当前文件所在的文件夹目录为空，删除该文件夹
+            parentFile.delete();
         }
     }
 

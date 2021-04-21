@@ -190,7 +190,7 @@ public class FileController {
             @ApiResponse(code = -2, message = "文件为空", response = ResultInfo.class),
             @ApiResponse(code = -3, message = "文件传输异常", response = ResultInfo.class),
     })
-    @PostMapping("/updateFile")
+    @PutMapping("/updateFile")
     public ResultInfo updateFile(@RequestParam(value = "fileName", required = false) String fileName, @RequestParam(value = "filePath", required = false) String filePath, @RequestParam("file") MultipartFile file) throws Exception {
         log.info("---->请求修改文件");
         Map<String, Object> data = fileService.updateFile(file, fileName, filePath);
